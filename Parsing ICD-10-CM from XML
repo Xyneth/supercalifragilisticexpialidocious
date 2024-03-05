@@ -1,0 +1,44 @@
+import base64,xml.dom.minidom
+from xml.dom.minidom import Node
+import pandas as pd
+from IPython.core.interactiveshell import InteractiveShell # for multiple outputs
+InteractiveShell.ast_node_interactivity = "all"
+
+new_data_list = []
+
+# Start XML parsing
+doc = xml.dom.minidom.parse('icd10cm_tabular_2020.xml')
+
+chapters = doc.documentElement.getElementsByTagName("chapter")
+
+for chapter in chapters:    
+    sections = chapter.getElementsByTagName("section")
+    
+    for section in sections:
+        diags = section.getElementsByTagName("diag")
+        
+        for diag in diags:
+            diagNameElement = diag.getElementsByTagName("name")[0]
+            diagDescElement = diag.getElementsByTagName("desc")[0]
+            
+            new_data_list.append([diagNameElement.childNodes[0].data, \
+                                  diagDescElement.childNodes[0].data])
+            subdiags = diag.getElementsByTagName("diag")
+            
+            for subdiag in subdiags:
+                subdiagNameElement = subdiag.getElementsByTagName("name")[0]
+                subdiagDescElement = subdiag.getElementsByTagName("desc")[0]
+                
+                new_data_list.append([subdiagNameElement.childNodes[0].data, \
+                                      subdiagDescElement.childNodes[0].data])
+
+# Generate output as dataframe                
+result = pd.DataFrame(new_data_list, columns = ['ICD10CM_code', \
+                                                'ICD10CM_display_name'])
+
+# Quick check on the result
+result.head(10)
+result.tail(10)
+
+# Save result as CSV file
+result.to_csv('icd10cm.csv')
